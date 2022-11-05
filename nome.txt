@@ -1,0 +1,16 @@
+Tem como criar um diretório local mandando o comando:
+    git init  - no terminal 
+    git status - verifica o estado do git
+    git add nome_do_arquivo - adiciona o arquivo no git
+    git commit -m "comentario" - salva o arquivo no git com um comentário como descrição
+    git add --all -> adiciona todos os arquivos no git para depois serem salvos
+    git checkout -> restaura todos os arquivos a um estado anterior do commit 
+    git remote add origin "link_do_github" -> adiciona o github local em um github remoto
+    git remote -v -> mostra o link do repositorio
+    git branch -M main -> muda o nome da branch para main
+    git push -u origin main -> a branch main sempre vai procurar o repositorio main
+    git checkout -b feature1 -> cria um novo ramo em que todas as altereçõs feitas no código ficam apenas nela, 
+    git push origin feature1 -> irá mandar as alterações para um novo ramo chamado de feature1
+    git checkout main -> retorna para o ramo principal
+
+Exportando um diretorio do github para um diretório local: 
