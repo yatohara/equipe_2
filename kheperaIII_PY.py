@@ -58,6 +58,7 @@ while robot.step(TIME_STEP) != -1: #Insira dentro desse laço while o código qu
         num += 1
     else:
          num = 0
+         
          turning = 0
 
     pass
