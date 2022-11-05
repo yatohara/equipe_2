@@ -33,8 +33,8 @@ us03.enable(TIME_STEP)
 right_speed = 0.75 * MAX_SPEED
 left_speed = 0.75 * MAX_SPEED
 
-turning = 0
-num = 0
+turning = 0  # variavel que controla quando o robo gira
+num = 0 # uma variavel que controla a angulacao do giro
 ##-------------------------------------------------------##
 while robot.step(TIME_STEP) != -1: #Insira dentro desse laço while o código que rodará continuamente (estilo loop do arduino)
     current_time = robot.getTime()
@@ -42,23 +42,23 @@ while robot.step(TIME_STEP) != -1: #Insira dentro desse laço while o código qu
     infraR_value = infraR.getValue()
     
     if turning != 1:
-        if infraL_value > 2000 or infraR_value > 2000:
-            turning = 1
+        if infraL_value > 2000 or infraR_value > 2000:  # verifica se os sensores estão na linha branca
+            turning = 1  # ativa a variavel de giro
     
     
-    if turning == 0:
+    if turning == 0:  # faz o robo andar reto
         roda_esquerda.setVelocity(left_speed)
         roda_direita.setVelocity(right_speed)
             
             
-    if turning == 1 and num < 22:
+    if turning == 1 and num < 22:  # faz o robo girar aproximadamente uns 180º 
             
         roda_esquerda.setVelocity(left_speed)
         roda_direita.setVelocity(-right_speed)
         num += 1
-    else:
+        
+    else:  # reseta as variaveis de giro e angulacao
          num = 0
-         
          turning = 0
 
     pass
