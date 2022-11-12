@@ -33,17 +33,28 @@ us03.enable(TIME_STEP)
 right_speed = 0.75 * MAX_SPEED
 left_speed = 0.75 * MAX_SPEED
 
-turning = 0  # variavel que controla quando o robo gira
-num = 0 # uma variavel que controla a angulacao do giro
+turning = 0
+num = 0
+esq = 0
+straight = 0
+dir = 0
+right = 0 
+left = 0
+
+
 ##-------------------------------------------------------##
 while robot.step(TIME_STEP) != -1: #Insira dentro desse laço while o código que rodará continuamente (estilo loop do arduino)
     current_time = robot.getTime()
     infraL_value = infraL.getValue()
     infraR_value = infraR.getValue()
-    
+    ultra_direita = us01.getValue()
+    ultra_frente = us02.getValue()
+    ultra_esquerda = us03.getValue()
+        
+
     if turning != 1:
         if infraL_value > 2000 or infraR_value > 2000:  # verifica se os sensores estão na linha branca
-            turning = 1  # ativa a variavel de giro
+            turning = 1
     
     
     if turning == 0:  # faz o robo andar reto
@@ -51,15 +62,39 @@ while robot.step(TIME_STEP) != -1: #Insira dentro desse laço while o código qu
         roda_direita.setVelocity(right_speed)
             
             
-    if turning == 1 and num < 22:  # faz o robo girar aproximadamente uns 180º 
+    if turning == 1 and num < 18:  # faz o robo girar, creio que uns 150º
             
         roda_esquerda.setVelocity(left_speed)
         roda_direita.setVelocity(-right_speed)
         num += 1
-        
     else:  # reseta as variaveis de giro e angulacao
          num = 0
          turning = 0
-
+         
+         
+    if left != 1:  # faz com que o robo vire para a esquerda se o sensor detectar algo
+        if ultra_esquerda > 1000:
+            left = 1  # foi necessario outra variavel de controle, pois quando eu tentei usar a mesma o robo viro uma beyblade
+     
+    if left == 1 and esq < 5:  # faz o robo girar so um pouco, para que ele fique de frente com o outro
+        roda_esquerda.setVelocity(left_speed)
+        roda_direita.setVelocity(-right_speed)
+        esq += 1
+    else:  # reseta a variavel de giro e angulacao
+        esq = 0
+        left = 0
+        
+    
+    if right != 1:  # é um movimento espelhado do giro para a esquerda
+        if ultra_direita > 1000:
+            right = 1
+     
+    if right == 1 and dir < 5:
+        roda_esquerda.setVelocity(-left_speed)
+        roda_direita.setVelocity(right_speed)
+        dir += 1
+    else:
+        dir = 0
+        right = 0
+      
     pass
-
