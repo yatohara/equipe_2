@@ -1,100 +1,139 @@
-##----------------------NÃO ALTERAR----------------------##
 from controller import Robot, Motor, DistanceSensor
-
-
 TIME_STEP = 32
 MAX_SPEED = 12
 
-robot = Robot()
 
-#Definindo os motores
-roda_esquerda = robot.getDevice("left wheel motor") #Motor esquerdo
-roda_direita = robot.getDevice("right wheel motor") #Motor direito
-roda_esquerda.setPosition(float('inf'))
-roda_direita.setPosition(float('inf'))
-roda_esquerda.setVelocity(0.0)
-roda_direita.setVelocity(0.0)
-
-#Definindo os sensores infravermelhos inferiores
-infraL = robot.getDevice("ds10") #Sensor infravermelho inferior esquerdo
-infraR = robot.getDevice("ds9") #Sensor infravermelho inferior direito
-infraL.enable(TIME_STEP)
-infraR.enable(TIME_STEP)
-
-#Definindos os sensores ultrassônicos
-us01 = robot.getDevice("us1") #Sensor ultrassônico lateral esquerdo
-us02 = robot.getDevice("us2") #Sensor ultrassônico fronta
-us03 = robot.getDevice("us3") #Sensor ultrassônico lateral direito
-us01.enable(TIME_STEP)
-us02.enable(TIME_STEP)
-us03.enable(TIME_STEP)
+#Listas de equipamentos do robo - CADA DEVICE DEVE TER UMA INSTANCE VINCULADA
+#Devices sao os equipamentos dentro do robo
+DEVICES = ['left wheel motor', 'right wheel motor', 'ds10', 'ds9', 'us1', 'us2', 'us3']
+#Instances são os nomes das instancias de cada device EM ORDEM
+INSTANCES = ['left_wheel', 'right_wheel', 'left_infra_red', 'right_infra_red', 'ultrassound_right', 'ultrassound_front', 'ultrassound_left']
 
 
-right_speed = 0.75 * MAX_SPEED
-left_speed = 0.75 * MAX_SPEED
-
-turning = 0
-num = 0
-esq = 0
-straight = 0
-dir = 0
-right = 0 
-left = 0
-
-
-##-------------------------------------------------------##
-while robot.step(TIME_STEP) != -1: #Insira dentro desse laço while o código que rodará continuamente (estilo loop do arduino)
-    current_time = robot.getTime()
-    infraL_value = infraL.getValue()
-    infraR_value = infraR.getValue()
-    ultra_direita = us01.getValue()
-    ultra_frente = us02.getValue()
-    ultra_esquerda = us03.getValue()
+#abordagem por maquina de estados
+class stateMachine:
+    def __init__(self, robot):
+        self.robot = robot
+        self.state = 'DEFAULT'
         
-
-    if turning != 1:
-        if infraL_value > 2000 or infraR_value > 2000:  # verifica se os sensores estão na linha branca
-            turning = 1
+        #faz um dicionario com as instancias e devices
+        self.devices = dict(zip(INSTANCES, DEVICES))
+        for x in self.devices.keys():
+            if 'wheel' in x: #encontrando uma variavel de motor
+                vars()[x] = self.robot.getDevice(self.devices[x]) #cria a variavel com o nome colocado na lista INSTANCES
+                self.devices[x] = vars()[x]
+                
+                self.devices[x].setPosition(float('inf')) #inicializa o motor
+                self.devices[x].setVelocity(0.0)
+                
+            elif 'infra_red' in x or 'ultrassound' in x: #faz o mesmo com sensores
+                vars()[x] = self.robot.getDevice(self.devices[x])
+                self.devices[x] = vars()[x]
+                
+                self.devices[x].enable(TIME_STEP)
     
     
-    if turning == 0:  # faz o robo andar reto
-        roda_esquerda.setVelocity(left_speed)
-        roda_direita.setVelocity(right_speed)
-            
-            
-    if turning == 1 and num < 18:  # faz o robo girar, creio que uns 150º
-            
-        roda_esquerda.setVelocity(left_speed)
-        roda_direita.setVelocity(-right_speed)
-        num += 1
-    else:  # reseta as variaveis de giro e angulacao
-         num = 0
-         turning = 0
-         
-         
-    if left != 1:  # faz com que o robo vire para a esquerda se o sensor detectar algo
-        if ultra_esquerda > 1000:
-            left = 1  # foi necessario outra variavel de controle, pois quando eu tentei usar a mesma o robo viro uma beyblade
-     
-    if left == 1 and esq < 5:  # faz o robo girar so um pouco, para que ele fique de frente com o outro
-        roda_esquerda.setVelocity(left_speed)
-        roda_direita.setVelocity(-right_speed)
-        esq += 1
-    else:  # reseta a variavel de giro e angulacao
-        esq = 0
-        left = 0
+    # Para facilitar os possíveis casos de movimento
+    def wheels_velocity(self, right_speed, left_speed):
+        self.devices['right_wheel'].setVelocity(right_speed)
+        self.devices['left_wheel'].setVelocity(left_speed)
+    
+    
+                
+    def process(self): #processamento dos estados
+        default = 'Error in Machine State' #mensagem de erro
+       
+        #"switch case" do python                    
+        return getattr(self, 'case_' + str(self.state), lambda: default)()
         
+    def case_FORWARD(self): #andar para frente
+        self.wheels_velocity(MAX_SPEED, MAX_SPEED)
+
+    def case_BACK(self): #andar para tras
+        self.wheels_velocity(-MAX_SPEED, -MAX_SPEED)
+
+    def case_LEFT(self): #virar para a direita
+        self.wheels_velocity(MAX_SPEED, -MAX_SPEED)
+
+        
+    def case_RIGHT(self): #virar para a esquerda
+        self.wheels_velocity(-MAX_SPEED, MAX_SPEED)
+        
+    def case_FORWARD_RIGHT(self):
+        self.wheels_velocity(MAX_SPEED, 0.25 * MAX_SPEED)
+
+    def case_FORWARD_LEFT(self):
+        self.wheels_velocity(0.25 * MAX_SPEED, MAX_SPEED)        
     
-    if right != 1:  # é um movimento espelhado do giro para a esquerda
-        if ultra_direita > 1000:
-            right = 1
-     
-    if right == 1 and dir < 5:
-        roda_esquerda.setVelocity(-left_speed)
-        roda_direita.setVelocity(right_speed)
-        dir += 1
-    else:
-        dir = 0
-        right = 0
-      
-    pass
+c = 0
+last_instruction = 0
+if __name__ == '__main__':
+ 
+    robot = stateMachine(Robot())
+         
+    while robot.robot.step(TIME_STEP) != -1: #Insira dentro desse laço while o código que rodará continuamente (estilo loop do arduino)
+        
+        current_time = robot.robot.getTime()
+        infraL_value = robot.devices['left_infra_red'].getValue()
+        infraR_value = robot.devices['right_infra_red'].getValue()
+        ultra_direita = robot.devices['ultrassound_right'].getValue()
+        ultra_frente = robot.devices['ultrassound_front'].getValue()
+        ultra_esquerda = robot.devices['ultrassound_left'].getValue()
+        
+        # Movimentação padrão
+        
+        # if ultra_esquerda > 500:
+            # robot.state = 'FORWARD_LEFT'
+            # print('Ultra esquerda')
+        # elif ultra_direita > 500:
+            # robot.state = 'FORWARD_RIGHT'
+            # print('Ultra direita')
+        # elif ultra_frente > 500:
+            # robot.state = 'FORWARD'
+            # print('Ultra frente')
+        # elif infraL_value > 2000 and current_time - last_instruction > 0.5:
+            # last_instruction = current_time
+            # robot.state = 'RIGHT'
+        # elif infraR_value > 2000 and current_time - last_instruction > 0.5:
+            # last_instruction = current_time
+            # robot.state = 'LEFT'
+        # elif current_time - last_instruction > 0.5:
+            # robot.state = 'FORWARD'
+            
+            
+        # Tentar dar a volta e empurrar
+        
+        
+        """
+        O robo está contornando a borda da arena e buscando o seu oponente. Falhas encontradas:
+            - Alcance dos sensores, o adversário tem que estar extramemente próximo das bordas
+            - O robo fica mais vulnerável
+        
+        Talvez se fosse possível detectar a localização exata do outro robo no inicio da partida
+        seria possível calcular uma trajetória em forma de arco, em vez de contornar as bordas.
+        
+        Da forma que está é possível o robo começar apontado para a linha branca, ou voltado para
+        os lados, já que no momento que ele encontrar a linha ele vai contorna-la.
+             
+        """
+        if c == 0:  # Essa flag seria para esse movimento só se repetir uma vez e após isso o robo voltar a ter a sua movimentação padrão
+            if ultra_esquerda > 500:
+                robot.state = 'FORWARD_LEFT'
+                c += 1
+                
+            elif ultra_direita > 500:
+                robot.state = 'FORWARD_RIGHT'
+                c += 1
+                
+            elif infraR_value > 2000: 
+                robot.state = 'LEFT'
+
+                 
+            elif infraL_value > 2000:
+                robot.state = 'RIGHT'
+
+                
+            else: 
+                robot.state = 'FORWARD'
+                
+        robot.process() #processa o estado
