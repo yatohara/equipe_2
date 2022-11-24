@@ -14,6 +14,11 @@
       contudo na simulação quando eles detectam algo, os valores ultrapassam 1000.
   
   
+  ### Trajetória de arco:
+  
+    Com o motor de fora no máximo RPM, quanto menor a velocidade do motor de dentro, mais fechado é o arco, enquanto 
+    quanto maior a velocidade do motor de dentro maior é o arco.
+  
     
     
 
