@@ -64,76 +64,144 @@ class stateMachine:
 
     def case_FORWARD_LEFT(self):
         self.wheels_velocity(0.25 * MAX_SPEED, MAX_SPEED)        
+
+
+class Strategies():
+
+    def __init__(self, robot):
+        self.robot = robot
+        self.task_time = 0
+
+        
+    def devices_value(self, device):
+        """ Método de classe que irá pegar o valor lido pelo sensor"""
+        
+        return self.robot.devices[device].getValue()
     
-c = 0
-last_instruction = 0
-if __name__ == '__main__':
- 
-    robot = stateMachine(Robot())
-         
-    while robot.robot.step(TIME_STEP) != -1: #Insira dentro desse laço while o código que rodará continuamente (estilo loop do arduino)
+    
+    def update_sensor(self):
         
-        current_time = robot.robot.getTime()
-        infraL_value = robot.devices['left_infra_red'].getValue()
-        infraR_value = robot.devices['right_infra_red'].getValue()
-        ultra_direita = robot.devices['ultrassound_right'].getValue()
-        ultra_frente = robot.devices['ultrassound_front'].getValue()
-        ultra_esquerda = robot.devices['ultrassound_left'].getValue()
+        """ Método de classe que irá definir os sensores e atualiza-los
         
-        # Movimentação padrão
+        *É necessário ser utilizado no inicio de cada estratégia, para os valores
+        dos sensores serem atualizados        
         
-        # if ultra_esquerda > 500:
-            # robot.state = 'FORWARD_LEFT'
-            # print('Ultra esquerda')
-        # elif ultra_direita > 500:
-            # robot.state = 'FORWARD_RIGHT'
-            # print('Ultra direita')
-        # elif ultra_frente > 500:
-            # robot.state = 'FORWARD'
-            # print('Ultra frente')
-        # elif infraL_value > 2000 and current_time - last_instruction > 0.5:
-            # last_instruction = current_time
-            # robot.state = 'RIGHT'
-        # elif infraR_value > 2000 and current_time - last_instruction > 0.5:
-            # last_instruction = current_time
-            # robot.state = 'LEFT'
-        # elif current_time - last_instruction > 0.5:
-            # robot.state = 'FORWARD'
-            
-            
-        # Tentar dar a volta e empurrar
-        
+        iflf = sensor infravermelho esquerdo
+        ifrg = sensor infravermelho direito
+        ultrg = sensor ultrassonico direito
+        ultlf = sensor ultrassonico esquerdo
+        ultfr = sensor ultrassonico frontal
+        time = tempo decorrido
         
         """
-        O robo está contornando a borda da arena e buscando o seu oponente. Falhas encontradas:
-            - Alcance dos sensores, o adversário tem que estar extramemente próximo das bordas
-            - O robo fica mais vulnerável
         
-        Talvez se fosse possível detectar a localização exata do outro robo no inicio da partida
-        seria possível calcular uma trajetória em forma de arco, em vez de contornar as bordas.
+        self.iflf = self.devices_value('left_infra_red')
+        self.ifrg = self.devices_value('right_infra_red')
+        self.ultrg = self.devices_value('ultrassound_right')
+        self.ultlf = self.devices_value('ultrassound_left')
+        self.ultfr = self.devices_value('ultrassound_front')
+        self.time = self.robot.robot.getTime()
+    
+            
+    def strategy_1(self):
+    
+        """ Seguir em frente até achar o inimigo
         
-        Da forma que está é possível o robo começar apontado para a linha branca, ou voltado para
-        os lados, já que no momento que ele encontrar a linha ele vai contorna-la.
-             
+        Estratégia padrão do mini-sumo, ele irá seguir em linha reta até encontrar
+        o robo adversário ou encontrar as bordas da arena
         """
-        if c == 0:  # Essa flag seria para esse movimento só se repetir uma vez e após isso o robo voltar a ter a sua movimentação padrão
-            if ultra_esquerda > 500:
-                robot.state = 'FORWARD_LEFT'
-                c += 1
-                
-            elif ultra_direita > 500:
-                robot.state = 'FORWARD_RIGHT'
-                c += 1
-                
-            elif infraR_value > 2000: 
-                robot.state = 'LEFT'
 
+        self.update_sensor()
+  
+        if self.iflf > 2000 and self.time - self.task_time > 0.5:
+            self.task_time = self.time           
+            self.robot.state = 'RIGHT'
+            
+        elif self.ifrg > 2000 and self.time - self.task_time > 0.5:
+            self.task_time = self.time
+            self.robot.state = 'LEFT'
+            
+        elif self.ultfr > 500:
+            self.robot.state = 'FORWARD'
+        
+        elif self.ultlf > 500:
+            self.robot.state = 'FORWARD_LEFT'
+        
+        elif self.ultrg > 500:
+            self.robot.state = 'FORWARD_RIGHT'
+     
+        elif self.time - self.task_time > 0.5:
+            self.robot.state = 'FORWARD'
+            
+    def strategy_2(self):
+        """ Tenta dar a volta no inimigo e empurra-lo pelo lado/por tras
+        
+        O mini-sumo deve começar virado para uma borda da arena, para então ele fazer uma 
+        curvatura até encontrar o adversário. A quantidade de vezes que esse comportamento 
+        é adotado é controlado pela variável "c", caso o limite seja atingido ele seguirá o 
+        comportamento padrão
+        
+        """
+        self.update_sensor()
+        c = 0
+        if c == 0:
+            if self.ultlf > 500:
+                self.robot.state = 'FORWARD_LEFT'
+                c += 1
+                
+                
+            elif self.ultrg > 500:
+                self.robot.state = 'FORWARD_RIGHT'
+                c += 1
+    
+            elif self.ifrg > 2000: 
+                self.robot.state = 'LEFT'
+    
                  
-            elif infraL_value > 2000:
-                robot.state = 'RIGHT'
-
+            elif self.iflf > 2000:
+                self.robot.state = 'RIGHT'
+    
                 
             else: 
                 robot.state = 'FORWARD'
                 
-        robot.process() #processa o estado
+        else:
+           self.strategy_1()
+    
+    def strategy_3(self):
+        """ Em andamento
+        
+        Consiste em fazer o robo ir dando uns "pulinhos" até o sensor detectar o adversário,
+        então fazer o robo ir com velocidade máxima para cima do inimigo
+        
+        
+        """
+    
+        self.update_sensor()
+        
+        if self.ultf == 0:
+            self.task_time = self.time
+        
+        
+        if self.iflf > 2000 and self.time - self.task_time > 0.5:
+            self.task_time = self.time           
+            self.robot.state = 'RIGHT'
+            
+        elif self.ifrg > 2000 and self.time - self.task_time > 0.5:
+            self.task_time = self.time
+            self.robot.state = 'LEFT'
+            
+            
+            
+        
+
+if __name__ == '__main__':
+ 
+    robot = stateMachine(Robot())
+    s = Strategies(robot)
+    while robot.robot.step(TIME_STEP) != -1: #Insira dentro desse laço while o código que rodará continuamente (estilo loop do arduino)
+        
+  
+        s.strategy_1()
+        pass
+        
