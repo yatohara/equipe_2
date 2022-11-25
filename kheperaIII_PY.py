@@ -1,4 +1,5 @@
 from controller import Robot, Motor, DistanceSensor
+from math import pi
 TIME_STEP = 32
 MAX_SPEED = 12
 
@@ -63,7 +64,19 @@ class stateMachine:
         self.wheels_velocity(MAX_SPEED, 0.25 * MAX_SPEED)
 
     def case_FORWARD_LEFT(self):
-        self.wheels_velocity(0.25 * MAX_SPEED, MAX_SPEED)        
+        self.wheels_velocity(0.25 * MAX_SPEED, MAX_SPEED)  
+        
+    def case_ARC_RIGHT(self):
+        self.wheels_velocity(MAX_SPEED, 0.9 * MAX_SPEED)    
+        
+    def case_ARC_LEFT(self):
+        self.wheels_velocity(0.9 * MAX_SPEED, MAX_SPEED)  
+        
+    def case_STOP(self):
+        self.wheels_velocity(0, 0)  
+    
+    def case_VRUM(self):
+        self.wheels_velocity(19.1, 19.1)
 
 
 class Strategies():
@@ -71,6 +84,9 @@ class Strategies():
     def __init__(self, robot):
         self.robot = robot
         self.task_time = 0
+        self.angular_speed = MAX_SPEED
+        self.T = 2*pi/self.angular_speed
+        self.c = 0
 
         
     def devices_value(self, device):
@@ -101,7 +117,8 @@ class Strategies():
         self.ultlf = self.devices_value('ultrassound_left')
         self.ultfr = self.devices_value('ultrassound_front')
         self.time = self.robot.robot.getTime()
-    
+        
+        
             
     def strategy_1(self):
     
@@ -112,7 +129,8 @@ class Strategies():
         """
 
         self.update_sensor()
-  
+        
+        # print(f"INFRA DIREITA: {self.ifrg}|ESQUERDA: {self.iflf}")
         if self.iflf > 2000 and self.time - self.task_time > 0.5:
             self.task_time = self.time           
             self.robot.state = 'RIGHT'
@@ -133,6 +151,8 @@ class Strategies():
         elif self.time - self.task_time > 0.5:
             self.robot.state = 'FORWARD'
             
+        
+            
     def strategy_2(self):
         """ Tenta dar a volta no inimigo e empurra-lo pelo lado/por tras
         
@@ -143,16 +163,15 @@ class Strategies():
         
         """
         self.update_sensor()
-        c = 0
-        if c == 0:
+        if self.c == 0:
             if self.ultlf > 500:
                 self.robot.state = 'FORWARD_LEFT'
-                c += 1
+                self.c += 1
                 
                 
             elif self.ultrg > 500:
                 self.robot.state = 'FORWARD_RIGHT'
-                c += 1
+                self.c += 1
     
             elif self.ifrg > 2000: 
                 self.robot.state = 'LEFT'
@@ -169,31 +188,161 @@ class Strategies():
            self.strategy_1()
     
     def strategy_3(self):
-        """ Em andamento
+        """ Vai parando e acelera
         
         Consiste em fazer o robo ir dando uns "pulinhos" até o sensor detectar o adversário,
         então fazer o robo ir com velocidade máxima para cima do inimigo
         
+        Caso os sensores laterais que detectem o robo, o comportamento é alterado para o padrão
         
         """
     
         self.update_sensor()
-        
-        if self.ultf == 0:
-            self.task_time = self.time
-        
-        
-        if self.iflf > 2000 and self.time - self.task_time > 0.5:
-            self.task_time = self.time           
-            self.robot.state = 'RIGHT'
+                
+        if self.c == 0:
+            if (self.iflf < 2000 or self.ifrg < 2000) and self.time - self.task_time > 0.2:
             
-        elif self.ifrg > 2000 and self.time - self.task_time > 0.5:
-            self.task_time = self.time
-            self.robot.state = 'LEFT'
-            
-            
-            
+                self.task_time = self.time           
+                self.robot.state = 'FORWARD'
+                
+            elif self.ultfr > 500:
+                self.robot.state = 'VRUM'
+                
+            elif self.ultlf > 500:
+                self.robot.state = 'FORWARD_LEFT'
+                self.c += 1
+                
+            elif self.ultrg > 500:
+                self.robot.state = 'FORWARD_RIGHT'
+                self.c += 1
+                
+            elif self.time - self.task_time < 0.15:
+                self.robot.state = 'STOP'
+        else: 
+            self.strategy_1()
+
         
+            
+    def strategy_4(self):
+        """ Segue em zigue-zague até encontrar o adversário
+        
+        Ao encontrar o adversário, irá retornar ao comportamento padrão
+        
+        
+        """
+
+        self.update_sensor()
+        
+        if self.c == 0:
+            if self.iflf > 2000:
+                self.task_time = self.time
+                self.robot.state = 'RIGHT'
+                
+            elif self.ifrg > 2000:
+                self.task_time = self.time
+                self.robot.state = 'LEFT'
+                
+            # Fica fazendo um zig-zag
+            elif self.time - self.task_time > self.T and self.robot.state == 'FORWARD_RIGHT':
+                self.task_time = self.time
+                self.robot.state = 'FORWARD_LEFT'
+    
+            elif self.time - self.task_time > self.T:
+                self.task_time = self.time
+                robot.state = 'FORWARD_RIGHT'
+    
+            # Quando encontra o outro robo, entra na estrategia de perseguicao
+            if self.ultlf != 0 or self.ultrg != 0 or self.ultfr != 0:
+                self.task_time = self.time
+                self.c += 1
+                
+        else:
+            self.strategy_1()
+            
+            
+    def strategy_5(self):
+        
+        """ Irá fazer uma trajetória em forma de arco até o adversário
+        
+        Ao encontrar o adversário o comportamento é alterado para o padrão,
+        o arco será pela direita, o robo deve estar mais para direita possivel, 
+        o robo tem que estar voltado para frente
+        
+        
+        """
+        
+        self.update_sensor()
+        
+        if self.c == 0:
+
+            if self.iflf > 2000:
+                self.task_time = self.time           
+                self.robot.state = 'RIGHT'
+                
+            elif self.ifrg > 2000:
+                self.task_time = self.time
+                self.robot.state = 'LEFT'
+                
+            elif self.ultfr > 500:
+                self.robot.state = 'FORWARD'
+                self.c += 1
+            
+            elif self.ultlf > 500:
+                self.robot.state = 'FORWARD_LEFT'
+                self.c += 1
+            
+            elif self.ultrg > 500:
+                self.robot.state = 'FORWARD_RIGHT'
+                self.c += 1
+                
+            elif self.time - self.task_time > 0.5:
+                self.robot.state = 'ARC_RIGHT'
+                
+        else:
+            self.strategy_1()
+            
+    
+    def strategy_6(self):
+        """ Irá fazer uma trajetória em forma de arco até o adversário
+        
+        Ao encontrar o adversário o comportamento é alterado para o padrão,
+        o arco será pela esquerda, o robo deve estar o mais para esquerda possivel, 
+        ele deve estar voltado para frente
+        
+        
+        """
+
+        self.update_sensor()
+        if self.c == 0:
+
+            if self.iflf > 2000:
+                self.task_time = self.time           
+                self.robot.state = 'RIGHT'
+                
+            elif self.ifrg > 2000:
+                self.task_time = self.time
+                self.robot.state = 'LEFT'
+                
+            elif self.ultfr > 500:
+                self.robot.state = 'FORWARD'
+                self.c += 1
+            
+            elif self.ultlf > 500:
+                self.robot.state = 'FORWARD_LEFT'
+                self.c += 1
+            
+            elif self.ultrg > 500:
+                self.robot.state = 'FORWARD_RIGHT'
+                
+                self.c += 1
+                
+            elif self.time - self.task_time > 0.5:
+                self.robot.state = 'ARC_LEFT'
+                
+        else:
+            self.strategy_1()
+                
+
 
 if __name__ == '__main__':
  
@@ -202,6 +351,6 @@ if __name__ == '__main__':
     while robot.robot.step(TIME_STEP) != -1: #Insira dentro desse laço while o código que rodará continuamente (estilo loop do arduino)
         
   
-        s.strategy_1()
+        s.strategy_3()
         pass
         
