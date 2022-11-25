@@ -351,6 +351,6 @@ if __name__ == '__main__':
     while robot.robot.step(TIME_STEP) != -1: #Insira dentro desse laço while o código que rodará continuamente (estilo loop do arduino)
         
   
-        s.strategy_3()
+        s.strategy_1()
         pass
         
