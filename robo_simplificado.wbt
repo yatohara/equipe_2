@@ -1,0 +1,233 @@
+#VRML_SIM R2021b utf8
+WorldInfo {
+  coordinateSystem "NUE"
+}
+Viewpoint {
+  orientation 0.997774744922227 -0.06170856751900236 0.025250962162608574 5.641623370510476
+  position 0.01433662133847512 1.4104564736392853 0.346422419928364
+}
+TexturedBackground {
+}
+TexturedBackgroundLight {
+  castShadows FALSE
+}
+CircleArena {
+  translation 0 0.5 -1
+  radius 0.5
+  floorAppearance PBRAppearance {
+    baseColor 0 0 0
+    roughness 1
+    metalness 0
+    occlusionMap ImageTexture {
+      url [
+        "textures/parquetry/chequered_parquetry_occlusion.jpg"
+      ]
+    }
+  }
+  wallThickness 0.03
+  wallHeight 0.0001
+  wallAppearance PBRAppearance {
+    metalness 0
+  }
+}
+Solid {
+  translation -0.01 0.5 -1
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0 0 0
+      }
+      geometry DEF CAIXA Box {
+        size 0.1 0.15 0.1
+      }
+    }
+  ]
+  boundingObject USE CAIXA
+  physics Physics {
+  }
+}
+Robot {
+  translation 5.30722e-08 0.53 -0.59
+  rotation 0 1 0 3.14159
+  children [
+    DEF Body Transform {
+      translation 0 0.0325 0
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0 0 0
+            metalness 0
+          }
+          geometry Box {
+            size 0.1 0.1 0.1
+          }
+        }
+      ]
+    }
+    HingeJoint {
+      jointParameters HingeJointParameters {
+        anchor -0.03 -0.015 -0.03
+      }
+      device [
+        RotationalMotor {
+          name "right wheel motor"
+          maxVelocity 12
+        }
+      ]
+      endPoint Solid {
+        translation -0.04 -0.015 -0.03
+        rotation -0.1226928148192887 0.12265191359739103 -0.9848365251566463 4.69784363443007
+        children [
+          DEF wheel Shape {
+            appearance PBRAppearance {
+              baseColor 1 1 0
+              metalness 0
+            }
+            geometry Cylinder {
+              height 0.021
+              radius 0.016
+            }
+          }
+        ]
+        boundingObject USE wheel
+        physics DEF wheel_physics Physics {
+        }
+      }
+    }
+    HingeJoint {
+      jointParameters HingeJointParameters {
+        anchor 0.04 -0.015 -0.03
+      }
+      device [
+        RotationalMotor {
+          name "left wheel motor"
+          maxVelocity 12
+        }
+      ]
+      endPoint Solid {
+        translation 0.04 -0.015 -0.03
+        rotation 0 0 1 1.57
+        children [
+          USE wheel
+        ]
+        name "solid(1)"
+        boundingObject USE wheel
+        physics USE wheel_physics
+      }
+    }
+    DistanceSensor {
+      translation 0.0390533 -0.018 0.0424244
+      rotation 0.31208704971125784 -0.23947303814482515 0.9193771464443796 -1.7819303061004252
+      children [
+        DEF infra Shape {
+          appearance PBRAppearance {
+            baseColor 0.666667 0 0
+          }
+          geometry Box {
+            size 1e-05 0.01 0.004
+          }
+        }
+      ]
+      name "ds10"
+      boundingObject USE infra
+      physics DEF infra_physics Physics {
+      }
+      lookupTable [
+        0 0 0
+        0.01 4000 0
+      ]
+      type "infra-red"
+    }
+    DistanceSensor {
+      translation -0.0390288 -0.018 0.0424299
+      rotation -0.2655730616085755 0.3466900804263876 0.8995982086919653 -1.680739693899575
+      children [
+        USE infra
+      ]
+      name "ds9"
+      boundingObject USE infra
+      physics DEF infra_physics Physics {
+      }
+      lookupTable [
+        0 0 0
+        0.01 4000 0
+      ]
+      type "infra-red"
+    }
+    DistanceSensor {
+      translation -0.0328647 0.023 0.051
+      rotation -0.7169718200902837 0.3685299075248019 -0.5917238515187525 -2.5094653071795863
+      children [
+        USE infra
+      ]
+      name "us3"
+      boundingObject USE infra
+      physics USE infra_physics
+      type "sonar"
+    }
+    DistanceSensor {
+      translation 0.0329 0.023 0.051
+      rotation -0.6438849119516418 -0.3279289551571941 -0.6912849054699064 2.41815
+      children [
+        USE infra
+      ]
+      name "us1"
+      boundingObject USE infra
+      physics USE infra_physics
+      type "sonar"
+    }
+    DistanceSensor {
+      translation -7.77429e-08 0.025 0.05
+      rotation 0.5771962280514292 -0.5776582282339664 0.5771962280514292 2.09393
+      children [
+        USE infra
+      ]
+      name "us2"
+      boundingObject USE infra
+      physics USE infra_physics
+      type "sonar"
+    }
+    DistanceSensor {
+      translation -0.0500081 0.01504 0.00999996
+      rotation -0.0002828771011703914 -0.7071062528950419 0.7071072528953996 3.14102
+      children [
+        USE infra
+      ]
+      name "us4"
+      boundingObject USE infra
+      physics USE infra_physics
+      type "sonar"
+    }
+    DistanceSensor {
+      translation 0.05 0.015 0.00999938
+      rotation -0.9999998380015254 0.00040492193440325365 -0.0004000439351934822 1.5708
+      children [
+        USE infra
+      ]
+      name "us5"
+      boundingObject USE infra
+      physics USE infra_physics
+      type "sonar"
+    }
+    Solid {
+      translation -3.18563e-05 0.085 0.0400319
+      rotation 0 1 0 1.57
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 1 1 0
+          }
+          geometry Box {
+            size 0.01 0.003 0.08
+          }
+        }
+      ]
+      name "solid(2)"
+    }
+  ]
+  name "teste"
+  boundingObject USE Body
+  physics Physics {
+  }
+  controller "KheperaIII_PY"
+}
