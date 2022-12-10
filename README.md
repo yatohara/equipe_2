@@ -20,7 +20,7 @@
     quanto maior a velocidade do motor de dentro maior é o arco.
   
     
-## Consideraçõs importantes sobre o mini-sumô simplificado
+## Considerações importantes sobre o mini-sumô simplificado
 
     Os motores devem ter uma velocidade de rotação de 50, as vezes o webots pode resetar para 12 automaticamente, então 
     ela deve ser posta manualmente se for o caso essa velocidade toda não é usada normalmente, apenas para fazer
