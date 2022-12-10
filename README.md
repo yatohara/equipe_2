@@ -20,5 +20,16 @@
     quanto maior a velocidade do motor de dentro maior é o arco.
   
     
+## Consideraçõs importantes sobre o mini-sumô simplificado
+
+    Os motores devem ter uma velocidade de rotação de 50, as vezes o webots pode resetar para 12 automaticamente, então 
+    ela deve ser posta manualmente se for o caso essa velocidade toda não é usada normalmente, apenas para fazer
+    algumas curvas, já que o bloco resiste muito a rotação.
+    
+    Os sensores de linha tiveram que fica em uma posição não convencional por não funcionarem quando estavam em baixo do robô
+    
+    Algumas estratégias que dependiam muito da rotação, que funcionavam no kheperaIII não conseguiram ser convertidas para o 
+    robô simplificado
+    
     
 
